@@ -1,6 +1,7 @@
 from skimage import data, feature, transform
 import matplotlib.pyplot as plt
 from sklearn.svm import LinearSVC
+from skimage.io import imread
 from itertools import chain
 from sklearn.datasets import fetch_lfw_people
 from sklearn.feature_extraction.image import PatchExtractor
@@ -42,3 +43,28 @@ for i, axis in enumerate(ax.flat):
 
 plt.show()
 """
+
+# we construct the training set with the output variable
+# we have to construct the HOG features
+# time-consuming
+X_train = np.array([feature.hog(image) for image in chain(positive_images, negative_images)])
+# label 0 - 1 // 0: non-face, 1: positive face
+
+y_train = np.zeros(X_train.shape[0])
+y_train[:positive_images.shape[0]] = 1
+
+# we construct the SVM
+svm = LinearSVC()
+svm.fit(X_train, y_train)
+
+# read the test images
+test_image = imread(fname="images/girl_face.png")
+test_image = transform.resize(test_image, positive_images[0].shape)
+
+plt.imshow(test_image, cmap='gray')
+plt.show()
+
+test_image_hog = np.array([feature.hog(test_image, channel_axis=-1)])
+prediction = svm.predict(test_image_hog)
+print(prediction)
+print("Prediction made by SVM: %f" % prediction)
